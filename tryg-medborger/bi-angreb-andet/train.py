@@ -7,7 +7,7 @@ from transformers import AutoTokenizer
 from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score
 import numpy as np
 import pandas as pd
-
+import time as time
 from model_def import ElectraClassifier
 from utils import save_model
 from data_prep import get_data_loader
@@ -43,7 +43,6 @@ def train(args):
             eps = args.epsilon,
             weight_decay=args.weight_decay)
 
-    # loss_fn = torch.nn.CrossEntropyLoss(weight=torch.tensor([1.,3.])).to(device)
     loss_fn = torch.nn.CrossEntropyLoss().to(device)
 
     # Train
@@ -51,6 +50,8 @@ def train(args):
     # print(torch.cuda.memory_reserved())
 
     for epoch in range(1, args.epochs + 1):
+        e_start = time.time()
+
         running_loss = 0
         correct = 0
         print('Epoch', epoch)
@@ -58,9 +59,12 @@ def train(args):
             b_input_ids = batch['input_ids'].to(device)
             b_input_mask = batch['attention_mask'].to(device)
             b_labels = batch['targets'].to(device)
+            
+            with torch.cuda.amp.autocast():
+                logits = model(b_input_ids, attention_mask=b_input_mask)   
+                assert logits.dtype is torch.float16
+                loss = loss_fn(logits.view(-1, args.num_labels), b_labels.view(-1))
 
-            logits = model(b_input_ids, attention_mask=b_input_mask)
-            loss = loss_fn(logits.view(-1, args.num_labels), b_labels.view(-1))
             optimizer.zero_grad()
             loss.sum().backward()
             optimizer.step()
@@ -71,15 +75,17 @@ def train(args):
 
         running_loss = running_loss/train_data.__len__()
         running_accuracy = 100*(correct/train_data.__len__())
-        print('Running loss', running_loss)
-        print('Running accuracy', running_accuracy)
+        print('Running loss', f'{running_loss:.4f}')
+        print('Running accuracy', f'{running_accuracy:.4f}')
+        print(f'Finished epoch after {round(time.time() - e_start, 2)} seconds.')
+
 
     save_model(model, args.model_dir,args.num_gpus)
 
     # Test on eval data
     eval_path = os.path.join(args.data_dir,args.eval)
     eval_loader,_ = get_data_loader(eval_path,tokenizer,args.max_len,args.test_batch_size)
-    predictions,true_labels,texts = test(model, eval_loader,device)
+    test(model, eval_loader,device)
 
 def test(model, eval_loader,device):
     model.eval()
@@ -93,7 +99,10 @@ def test(model, eval_loader,device):
             b_input_mask = batch['attention_mask'].to(device)
             b_labels = batch['targets'].to(device)
 
-            logits = model(b_input_ids,b_input_mask)
+            with torch.cuda.amp.autocast():
+                logits = model(b_input_ids, attention_mask=b_input_mask)   
+                assert logits.dtype is torch.float16
+
             _,preds = torch.max(logits, dim=1)
 
             predictions = torch.cat((predictions, preds))
@@ -105,11 +114,9 @@ def test(model, eval_loader,device):
 
     print("confusion matrix:")
     print(confusion_matrix(true_labels, predictions))
-    print('F1 score:', f1_score(true_labels, predictions))
-    print('Precision score:', precision_score(true_labels, predictions))
-    print('Recall score:', recall_score(true_labels, predictions))
-    return predictions,true_labels,texts
-
+    print('F1 score:', f'{f1_score(true_labels, predictions):.4f}')
+    print('Precision score:', f'{precision_score(true_labels, predictions):.4f}')
+    print('Recall score:', f'{recall_score(true_labels, predictions):.4f}')
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -137,5 +144,7 @@ if __name__ == "__main__":
     parser.add_argument("--num-cpus", type=int, default=os.environ["SM_NUM_CPUS"])
 
     ## RUN
+    start = time.time()
     args = parser.parse_args()
     train(args)
+    print(f'Finished job after {round(time.time() - start, 2)} seconds.')
