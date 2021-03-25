@@ -78,17 +78,8 @@ def train(args):
 
     # Test on eval data
     eval_path = os.path.join(args.data_dir,args.eval)
-    eval_loader,_ = get_data_loader(eval_path,tokenizer,args.max_len,args.test_batch_size,num_workers)
+    eval_loader,_ = get_data_loader(eval_path,tokenizer,args.max_len,args.test_batch_size)
     predictions,true_labels,texts = test(model, eval_loader,device)
-
-    # Export predictions to csv
-    # obs = list()
-    # for pred,true,text in zip(predictions,true_labels,texts):
-    #     d = {'predicted_label':pred,'true_label':true,'correct':true==pred,'text':text}
-    #     obs.append(d)
-    # df = pd.DataFrame(obs)
-    # data_path = os.path.join(args.data_dir,'predicted.csv')
-    # df.to_csv(data_path,encoding='utf-8',sep='\t')
 
 def test(model, eval_loader,device):
     model.eval()
@@ -148,15 +139,3 @@ if __name__ == "__main__":
     ## RUN
     args = parser.parse_args()
     train(args)
-
-    # device = 'cuda:0'
-    # tokenizer = AutoTokenizer.from_pretrained(args.model_checkpoint, use_fast=True)
-    # train_path = os.path.join(args.data_dir,args.train)
-    # train_loader,train_data = get_data_loader(train_path,tokenizer,args.max_len,1,6,args.with_context)
-    # for step, batch in enumerate(train_loader):
-    #     print(batch['text'])
-    #     print(batch['input_ids'])
-    #     b_input_ids = batch['input_ids'].to(device)
-    #     b_input_mask = batch['attention_mask'].to(device)
-    #     b_labels = batch['targets'].to(device)
-    #     break
