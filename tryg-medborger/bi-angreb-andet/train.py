@@ -62,7 +62,7 @@ def train(args):
             
             with torch.cuda.amp.autocast():
                 logits = model(b_input_ids, attention_mask=b_input_mask)   
-                assert logits.dtype is torch.float16
+                print(logits.dtype)
                 loss = loss_fn(logits.view(-1, args.num_labels), b_labels.view(-1))
 
             optimizer.zero_grad()
@@ -101,7 +101,6 @@ def test(model, eval_loader,device):
 
             with torch.cuda.amp.autocast():
                 logits = model(b_input_ids, attention_mask=b_input_mask)   
-                assert logits.dtype is torch.float16
 
             _,preds = torch.max(logits, dim=1)
 
