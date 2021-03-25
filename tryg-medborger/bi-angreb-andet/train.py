@@ -60,9 +60,13 @@ def train(args):
             b_input_mask = batch['attention_mask'].to(device)
             b_labels = batch['targets'].to(device)
             
-            with torch.cuda.amp.autocast():
+            if args.use_half_precision:
+                print('half')
+                with torch.cuda.amp.autocast():
+                    logits = model(b_input_ids, attention_mask=b_input_mask)   
+                    loss = loss_fn(logits.view(-1, args.num_labels), b_labels.view(-1))
+            else:
                 logits = model(b_input_ids, attention_mask=b_input_mask)   
-                print(logits.dtype)
                 loss = loss_fn(logits.view(-1, args.num_labels), b_labels.view(-1))
 
             optimizer.zero_grad()
@@ -99,8 +103,12 @@ def test(model, eval_loader,device):
             b_input_mask = batch['attention_mask'].to(device)
             b_labels = batch['targets'].to(device)
 
-            with torch.cuda.amp.autocast():
+            if args.use_half_precision:
+                with torch.cuda.amp.autocast():
+                    logits = model(b_input_ids, attention_mask=b_input_mask)   
+            else:
                 logits = model(b_input_ids, attention_mask=b_input_mask)   
+
 
             _,preds = torch.max(logits, dim=1)
 
@@ -141,6 +149,8 @@ if __name__ == "__main__":
     parser.add_argument("--data-dir", type=str, default=os.environ["SM_CHANNEL_DATA"])
     parser.add_argument("--num-gpus", type=int, default=os.environ["SM_NUM_GPUS"])
     parser.add_argument("--num-cpus", type=int, default=os.environ["SM_NUM_CPUS"])
+
+    parser.add_argument("--use-half-precision", action='store_true')
 
     ## RUN
     start = time.time()
