@@ -61,7 +61,6 @@ def train(args):
             b_labels = batch['targets'].to(device)
             
             if args.use_half_precision:
-                print('half')
                 with torch.cuda.amp.autocast():
                     logits = model(b_input_ids, attention_mask=b_input_mask)   
                     loss = loss_fn(logits.view(-1, args.num_labels), b_labels.view(-1))
