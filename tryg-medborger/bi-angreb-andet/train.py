@@ -43,7 +43,8 @@ def train(args):
             eps = args.epsilon,
             weight_decay=args.weight_decay)
 
-    loss_fn = torch.nn.CrossEntropyLoss().to(device)
+    loss_fn = torch.nn.CrossEntropyLoss(weight=torch.tensor([1.3,1.])).to(device)
+    # loss_fn = torch.nn.CrossEntropyLoss().to(device)
 
     # Train
     model.train()
@@ -120,9 +121,9 @@ def test(model, eval_loader,device):
 
     print("confusion matrix:")
     print(confusion_matrix(true_labels, predictions))
-    print('F1 score:', f'{f1_score(true_labels, predictions):.4f}')
-    print('Precision score:', f'{precision_score(true_labels, predictions):.4f}')
-    print('Recall score:', f'{recall_score(true_labels, predictions):.4f}')
+    print('F1 score:', f'{f1_score(true_labels, predictions,average="macro"):.4f}')
+    print('Precision score:', f'{precision_score(true_labels, predictions,average="macro"):.4f}')
+    print('Recall score:', f'{recall_score(true_labels, predictions,average="macro"):.4f}')
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
