@@ -43,8 +43,7 @@ def train(args):
             eps = args.epsilon,
             weight_decay=args.weight_decay)
 
-    loss_fn = torch.nn.CrossEntropyLoss(weight=torch.tensor([1.3,1.])).to(device)
-    # loss_fn = torch.nn.CrossEntropyLoss().to(device)
+    loss_fn = torch.nn.CrossEntropyLoss().to(device)
 
     # Train
     model.train()
@@ -151,6 +150,8 @@ if __name__ == "__main__":
     parser.add_argument("--num-cpus", type=int, default=os.environ["SM_NUM_CPUS"])
 
     parser.add_argument("--use-half-precision", action='store_true')
+
+
 
     ## RUN
     start = time.time()
