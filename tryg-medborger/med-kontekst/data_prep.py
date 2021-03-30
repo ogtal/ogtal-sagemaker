@@ -41,7 +41,7 @@ def get_data_loader(path,group_model,tokenizer,max_len,batch_size):
 	dataset = remove_invalid_inputs(dataset,'text')
 
 	group_model_p,groups,group_tree = process_group_model(group_model)
-	group_features = get_group_features(dataset.main_text.tolist(),group_model_p)
+	group_features = get_group_features(dataset.text.tolist(),group_model_p)
 
 	data = CustomDataset(
 					text=dataset.text.to_numpy(),
