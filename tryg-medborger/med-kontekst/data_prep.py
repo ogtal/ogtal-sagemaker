@@ -40,9 +40,10 @@ def get_data_loader(path,group_model,tokenizer,max_len,batch_size):
 	dataset = pd.read_csv(path, sep='\t', names = ['targets', 'target_names', 'text', 'origin', 'main_text', 'secondary_text', 'source'])
 	dataset = remove_invalid_inputs(dataset,'text')
 	dataset['all_text'] = dataset['text'].str.cat(dataset[['origin','main_text', 'secondary_text']], sep=' - ')
+	dataset['context'] = dataset['origin'].str.cat(dataset[['main_text', 'secondary_text']], sep=' - ')
 
 	group_model_p,groups,group_tree = process_group_model(group_model)
-	group_features = get_group_features(dataset.all_text.tolist(),group_model_p)
+	group_features = get_group_features(dataset.context.tolist(),group_model_p)
 
 	data = CustomDataset(
 					text=dataset.text.to_numpy(),

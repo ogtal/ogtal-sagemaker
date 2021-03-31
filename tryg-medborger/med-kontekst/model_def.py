@@ -29,7 +29,6 @@ class ElectraClassifier(nn.Module):
         discriminator_hidden_states = self.electra(input_ids=input_ids,attention_mask=attention_mask)
         sequence_output = discriminator_hidden_states[0]
         sequence_output = sequence_output[:, 0, :]
-        features = torch.cat((sequence_output,group_feat.squeeze()),dim=1)
-
+        features = torch.cat((sequence_output,group_feat.squeeze(dim=1)),dim=1)
         logits = self.classifier(features)
         return logits

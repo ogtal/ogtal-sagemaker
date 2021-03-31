@@ -46,8 +46,8 @@ def train(args):
             eps = args.epsilon,
             weight_decay=args.weight_decay)
 
-    loss_fn = torch.nn.CrossEntropyLoss().to(device)
-
+    # loss_fn = torch.nn.CrossEntropyLoss().to(device)
+    loss_fn = torch.nn.CrossEntropyLoss(weight=torch.tensor([1.5,1.])).to(device)
     # Train
     model.train()
     # print(torch.cuda.memory_reserved())
