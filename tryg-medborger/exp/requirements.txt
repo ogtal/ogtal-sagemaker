@@ -1,0 +1,4 @@
+transformers
+datasets
+numpy>=1.16.6
+torch_optimizer
